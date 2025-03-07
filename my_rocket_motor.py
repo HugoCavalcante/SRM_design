@@ -35,31 +35,31 @@ kv = 0.03       # propellant 'erosive burning' velocity coefficient
 #%%%  Parameters -------------------------------------------------------------
 ######### Propellant grain parameters
 # Grain external diameter
-D0 = 46.0 #21.4 #44.0 #369.0 #43.0 # External diameter of propellant grain, in mm (initial)
-d0 = 30.0 #29.0 #18.0 # Diameter of the propellant grains hollow core, in mm (initial)
-L0 = 294 #48.0 #294.0 #290.0 # Length of propellant grain (full, all segments), in mm
-Nsegs = 1 #2 #4 #1 # Number of segments comprising the propellant grain
-Lseg = L0/Nsegs # Length of each segment of the propellant grain
+# D0 = 46.0 #21.4 #44.0 #369.0 #43.0 # External diameter of propellant grain, in mm (initial)
+# d0 = 30.0 #29.0 #18.0 # Diameter of the propellant grains hollow core, in mm (initial)
+# L0 = 294 #48.0 #294.0 #290.0 # Length of propellant grain (full, all segments), in mm
+# Nsegs = 1 #2 #4 #1 # Number of segments comprising the propellant grain
+# Lseg = L0/Nsegs # Length of each segment of the propellant grain
 
-### Inhibit external cylinder surface (for the BATES method)
-inhibit_ext = False
+# ### Inhibit external cylinder surface (for the BATES method)
+# inhibit_ext = False
 
-######### Combustion chamber parameters
-Dc = 48.5 #25.4 #48.5 #75.0 #48.5  # Internal diameter of the chamber (mm)
-Lc = 300 #48.0 #300.0 #470.0 #290.0 # Internal chamber length  (mm)
-### You can specify eiher dc or thickness
-###---------------------------------------------
-#dc = 44.5 # Internal chamber diameter (mm)
-#thickness = (Dc - dc)/2  # thichness of the combustion chamber wall (mm)
-thickness = 2.0 #1.8 # thichness of the combustion chamber wall (mm)
-dc = Dc - 2*thickness
-###---------------------------------------------
-### throat diameter (mm) (initial)
-Dt0 = 18.0 #5.0 #15.6 #10.0 #18.0
-### throat diameter (mm) (final) 
-Dtf = 20.0 #18.0 #14.0
-### Rate of increase in throat diameter (due to erosion) to regression. Usually set to 0, but important for a hole in a PVC cap. 
-e_rate = 2*(Dtf-Dt0)/(D0-d0)
+# ######### Combustion chamber parameters
+# Dc = 48.5 #25.4 #48.5 #75.0 #48.5  # Internal diameter of the chamber (mm)
+# Lc = 300 #48.0 #300.0 #470.0 #290.0 # Internal chamber length  (mm)
+# ### You can specify eiher dc or thickness
+# ###---------------------------------------------
+# #dc = 44.5 # Internal chamber diameter (mm)
+# #thickness = (Dc - dc)/2  # thichness of the combustion chamber wall (mm)
+# thickness = 2.0 #1.8 # thickness of the combustion chamber wall (mm)
+# dc = Dc - 2*thickness
+# ###---------------------------------------------
+# ### throat diameter (mm) (initial)
+# Dt0 = 18.0 #5.0 #15.6 #10.0 #18.0
+# ### throat diameter (mm) (final) 
+# Dtf = 20.0 #18.0 #14.0
+# ### Rate of increase in throat diameter (due to erosion) to regression. Usually set to 0, but important for a hole in a PVC cap. 
+# e_rate = 2*(Dtf-Dt0)/(D0-d0)
 
 mass_casing_wall = 594 #3.0 #594.0 # grams (just the tube) 
 mass_bulkhead = 108 #0.0 #108.0 #52.0 # grams
@@ -67,8 +67,153 @@ mass_nozzle = 50 #5.0 #50.0 #40.0   # grams
 mc = mass_casing_wall + mass_bulkhead + mass_nozzle 
 
 
+######### A few motors 
+
+#### Richard Nakka's Impulser (2013), class I, four BATES segments with inhibited outer surface.
+#### May use KNDX or KNSB
+D0 = 34.8 # mm (1.5" - 2*0.065")
+d0 = 9.525 # mm (3/8")
+Nsegs = 4
+L0 = Nsegs*(1/2)*(3*D0+d0) # 227.85 mm
+Lseg = L0/Nsegs
+Dc = 38.1 # mm (1.5")
+dc = D0
+Lc = 293.116 # mm (11.54")
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
+Dt0 = 7.053 #6.706 # mm (0.264")
+Dtf = 7.086 #6.731
+inhibit_ext = True
+beta = 30 # nozzle covergence angle (degrees)
+alpha = 10 # nozzle divergence angle (degrees)
+De = dc # exit diameter at the end of the nozzle (mm)
+propellant = knsb
+#### 
+#### Impulser X (longer casing, five segments)
+D0 = 34.8 # mm (1.5" - 2*0.065")
+d0 = 9.525 # mm (3/8")
+Nsegs = 5
+L0 = Nsegs*(1/2)*(3*D0+d0) # 284.8 mm
+Lseg = L0/Nsegs
+Dc = 38.1 # mm (1.5")
+dc = D0
+Lc = 356.6 # mm (14.04")
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
+Dt0 = 8.640 #8.763 # mm (0.345")
+Dtf = 8.720 #8.843 
+inhibit_ext = True
+beta = 30 # nozzle covergence angle (degrees)
+alpha = 10 # nozzle divergence angle (degrees)
+De = dc # exit diameter at the end of the nozzle (mm)
+propellant = kndx 
+#########
+#### Impulser XX (even longer casing, six segments)
+D0 = 34.8 # mm (1.5" - 2*0.065")
+d0 = 9.525 # mm (3/8")
+Nsegs = 6
+L0 = Nsegs*(1/2)*(3*D0+d0) # 
+Lseg = L0/Nsegs
+Dc = 38.1 # mm (1.5")
+dc = D0
+Lc = 420.37 # mm (16.55")
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
+Dt0 = 9.804 #8.763 # mm (0.345")
+Dtf = 9.884 #8.843 
+inhibit_ext = True
+beta = 30 # nozzle covergence angle (degrees)
+alpha = 10 # nozzle divergence angle (degrees)
+De = dc # exit diameter at the end of the nozzle (mm)
+propellant = kndx 
+###
+##### Design parameter for the Impulser et al., according to Nakka
+###___________________________________________________________________________
+### Parameter      | units |   Impulser        |  Impulser-X  |  Impulser-XX  |
+### Propellant     |   -   |   KNSB   |  KNDX  |    KNDX      |    KNDX       |
+### Propel. mass   |   g   |   300    |   306  |    383       |     465       |
+### MEOP (max P)   |  MPa  |   6.9    |   6.9  |    6.9       |     6.9       |
+### Kn range       |   -   | 324-410  | 270-342|   270-342    |   265-330     |
+### throat diam.   |  mm   |   7.053  | 7.728  |    8.640     |    9.804      |
+### Max thrust     |   N   |    400   |   500  |     625      |     750       |
+### Thrust duration|   s   |    1.1   |   0.9  |     0.9      |     0.9       |
+### Total impulse  |   Ns  |    380   |   400  |     500      |     600       |
+###________________|_______|__________|________|______________|_______________|
+###
+###
+
+#### Richard Nakka's Kappa (2001), class K, four BATES segments with inhibited outer surface.
+D0 = 55.1 # mm (2.170")
+d0 = 19.05# mm (3/4")
+Nsegs = 4
+L0 = Nsegs*(1/2)*(3*D0+d0) # 
+Lseg = L0/Nsegs
+Dc = 63.5 # mm (2.5")
+dc = D0
+Lc = 462 # mm (18.2")
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
+Dt0 = 12.75 # mm (0.502")
+Dtf = 12.75 
+inhibit_ext = True
+beta = 45 # nozzle covergence angle (degrees)
+alpha = 12 # nozzle divergence angle (degrees)
+De = 53.85 # exit diameter at the nozzle (mm)
+propellant = kndx 
+### Results for the Kappa
+###____________________________________________
+### Parameter      | units |       Kappa       |
+### Propellant     |   -   |   KNDX   |  KNSB  |
+### Propel. mass   |   g   |   1500   |  1500  |
+### MEOP (max P)   |  MPa  |   8.5    |   8.5  |
+### Kn range       |   -   | 320-380  |    -   |
+### throat diam.   |  mm   |   12.75  |    -   |
+### Max thrust     |   N   |    1580  |  1620  |
+### Thrust duration|   s   |    1.5   |1.5-2.0 |
+### Total impulse  |   Ns  |   2003   |  1821* |
+### Specif. impulse|   s   |   137    |  125   |
+###________________|_______|__________|________|
+#### *predicted 1987 Ns
+###
+
+#### Richard Nakka's Juno, class J, single hollow grain, no inhibitors, regressive profile
+D0 = 45 # mm (2.170")
+d0 = 15 # ?  
+Nsegs = 1
+#L0 = Nsegs*(1/2)*(3*D0+d0) # 
+L0 = 300 # ?
+Lseg = L0/Nsegs
+Dc = 48 # mm (1.875")
+dc = D0
+Lc = 338 # mm (13.3")
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
+Dt0 = 15 # mm (0.590")
+Dtf = 15 
+inhibit_ext = False
+beta = 30 # nozzle covergence angle (degrees)
+alpha = 12 # nozzle divergence angle (degrees)
+De = 42.4 # exit diameter at the nozzle (mm)
+propellant = kndx 
+### Results for the Juno
+###____________________________________________
+### Parameter      | units |       Juno        |
+### Propellant     |   -   |   KNDX   |  KNSB  |
+### Propel. mass   |   g   |    650   |        |
+### MEOP (max P)   |  MPa  |    6.9   |        |
+### Kn range       |   -   |  285-312 |    -   |
+### throat diam.   |  mm   |    15    |    -   |
+### Max thrust     |   N   |    1740  |        |
+### Thrust duration|   s   |    0.56  |        |
+### Total impulse  |   Ns  |    885   |        |
+### Specif. impulse|   s   |    139   |        |
+###________________|_______|__________|________|
+###
+
+
+
+
+#########
+e_rate = 2*(Dtf-Dt0)/(D0-d0)
+
+
 #%%%% Choice to the propellant to be used
-propellant = knsu
+#propellant = knsb
 ### You can see the available propellants in the variable 'list_of_propellants'
 # print(list_of_propellants)
 ### You can also get the propellant object by its exact name:
@@ -107,7 +252,8 @@ rho_p = rho_p*non_ideal_density_factor
 print(f"Propellent effective density = {rho_p:.4g} g/cm³.")
 
 ### Choosing the material for the combustion chamber
-rho_chamber = rho_steel
+#rho_chamber = rho_steel
+rho_chamber = rho_aluminum
 
 
 #%% Functions definitions ----------------------------------------------------
@@ -511,14 +657,14 @@ print(f'Motor classification: {classification} {round(F_avg)}-0')
 # %%% Nozzle geometry
 ######### Nozzle geometry
 ### Nozzle convergence half-angle beta (degrees)
-beta = 89 #70 #89.0 #35.0
+#beta = 30 #89 #70 #89.0 #35.0
 beta_rad = beta*pi/180.0
 ### Nozzle divergence half-angle alpha (degrees)
-alpha = 85 #12 #89.0 #12.0
+#alpha = 10 #85 #12 #89.0 #12.0
 alpha_rad = alpha*pi/180.0
 ### Nozzle exit diameter (mm)
-De = dc # mm. If truncated, you can enter a value. Affects the parameter L_nozzle_d (divergence lenght)
-De = Dt0+1.0
+#De = dc # mm. If truncated, you can enter a value. Affects the parameter L_nozzle_d (divergence length)
+#De = Dt0+1.0
 L_nozzle_c = ((dc-Dt0)/2)/tan(beta_rad)
 L_nozzle_d = ((De-Dt0)/2)/tan(alpha_rad)
 L_nozzle_t = 2.0 #25.0 # mm 

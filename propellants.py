@@ -71,6 +71,8 @@ knsb_fine = Propellant(
     To=1600  # combustion temperature in K
 )
 list_of_proppelants.append(knsb_fine)
+knsb = knsb_fine
+list_of_proppelants.append(knsb)
 
 knsb_coarse = Propellant(
     prop_name="KNSB coarse",

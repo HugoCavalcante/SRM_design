@@ -7,6 +7,8 @@ Created on Sat Feb 15 13:30:55 2025
 @author: hugo
 """
 
+from numpy import where
+
 #%% Constants ----------------------------------------------------------------
 g = 9.81        # standard gravity acceleration
 R_prime = 8.3144598 # universal gas constant (J/mol K)
@@ -106,6 +108,7 @@ class Propellant:
         N_params = len(params)
         for i in range(N_params):
             Kn += params[i]*P**i
+        Kn = where(Kn>=0, Kn, 0.0)
         return Kn
     
 
