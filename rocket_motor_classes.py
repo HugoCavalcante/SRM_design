@@ -42,6 +42,24 @@ from constants import *
 # rho_PVC = 1.4
 
 
+class StructuralMaterial:
+    def __init__(self, name, density):
+        self.name = name
+        self.density = density 
+    def display_properties(self):
+        print('Properties of structural material:')
+        print(f'  Name: {self.name}')
+        print(f'  Density: {self.density:.3f} g/cm³')
+            
+        
+if __name__ == '__main__':
+    ### These are also defined in 'propellants.py'
+    steel = StructuralMaterial('steel', rho_steel)
+    aluminum = StructuralMaterial('aluminum', rho_aluminum)
+    PVC = StructuralMaterial('PVC', rho_PVC)
+
+
+
 #%%% Propellent properties (tables) and choice of fuel type, etc
 #%%%% Definition of the Propellant class
 class Propellant:
@@ -68,7 +86,7 @@ class Propellant:
         self.k = k  # Specific heats ratio Cp/Cv
         self.To = To  # Ideal combustion temperature (K)
 
-    def display_info(self):
+    def display_properties(self):
         print(f"Propellant Name: {self.prop_name}")
         print(f"Oxidizer Name: {self.oxidizer_name}")
         print(f"Fuel Name: {self.fuel_name}")
@@ -187,9 +205,9 @@ class Grain:
         print('Grain Properties:')
         print(f'  External Diameter (Dg0): {self.Dg0} mm')
         print(f'  Core Diameter (dg0): {self.dg0} mm')
-        print(f'  Total Length (Lg0): {self.Lg0} mm')
+        print(f'  Total Length (Lg0): {self.Lg0:.1f} mm')
         print(f'  Number of Segments (Nsegs): {self.Nsegs}')
-        print(f'  Length of Each Segment (Lseg): {self.Lseg} mm')
+        print(f'  Length of Each Segment (Lseg): {self.Lseg:.1f} mm')
         print(f'  Inhibit External Surface: {self.inhibit_ext}')
         print(f'  Initial Propellant Mass: {self.grain_mass():.0f} g')
         print(f'  Combustion Efficiency (hc): {self.hc}')
@@ -202,16 +220,6 @@ if __name__ == "__main__":
     grain = Grain(Dg0=46, dg0=30, Lg0=300, Nsegs=1, Lseg=(300-2)/1, inhibit_ext=True, propellant = propellant_example, hc=0.95, G_star=2.5, kv=0.05)
     grain.display_properties()
 
-
-class StructuralMaterial:
-    def __init__(self, name, density):
-        self.name = name
-        self.density = density 
-        
-if __name__ == '__main__':
-    steel = StructuralMaterial('steel', rho_steel)
-    aluminum = StructuralMaterial('aluminum', rho_aluminum)
-    PVC = StructuralMaterial('PVC', rho_PVC)
 
 class CombustionChamber:
     def __init__(self, Dc, dc, Lc, Bo, No, material):
@@ -293,6 +301,39 @@ class Nozzle:
         L_nozzle = L_nozzle_c + L_nozzle_d + self.Lt
         return L_nozzle
 
+
+    def draw_nozzle(self):
+        if not "plot" in globals():
+            from matplotlib.pyplot import plot
+        if not "subplots" in globals():
+            from matplotlib.pyplot import subplots 
+        if not "grid" in globals():
+            from matplotlib.pyplot import grid
+        if not "arrow" in globals():
+            from matplotlib.pyplot import arrow 
+        L_nozzle_c = self.calculate_convergent_length()
+        L_nozzle_d = self.calculate_divergent_length()
+        L_nozzle = self.calculate_total_length()
+        alpha_rad = radians(self.alpha)
+        beta_rad = radians(self.beta)
+        fig, ax = subplots()
+        
+        plot([-self.Lt/2-(self.Dtf-self.Dt0)/tan(alpha_rad)/2, self.Lt/2+(self.Dtf-self.Dt0)/tan(beta_rad)/2],
+             [self.Dtf/2, self.Dtf/2], lw = 2, color = 'red')
+        plot([-self.Lt/2-(self.Dtf-self.Dt0)/tan(alpha_rad)/2, self.Lt/2+(self.Dtf-self.Dt0)/tan(beta_rad)/2],
+             [-self.Dtf/2, -self.Dtf/2], lw = 2, color = 'red')
+        plot([-L_nozzle_d-self.Lt/2, -self.Lt/2, self.Lt/2, self.Lt/2+L_nozzle_c], 
+             [self.De/2, self.Dt0/2, self.Dt0/2, self.D1/2], lw = 2, color = 'black')
+        plot([-L_nozzle_d-self.Lt/2, -self.Lt/2, self.Lt/2, self.Lt/2+L_nozzle_c], 
+             [-self.De/2, -self.Dt0/2, -self.Dt0/2, -self.D1/2], lw = 2, color = 'black')
+        
+        ax_x_lims = ax.get_xlim()
+        ax_y_lims = ax.get_ylim()
+        ax.set_box_aspect((ax_y_lims[1]-ax_y_lims[0])/(ax_x_lims[1]-ax_x_lims[0]))
+        grid()
+        arrow(0,0, -L_nozzle/5, 0, width = 0.8)
+
+
     def display_properties(self):
         print('Nozzle Properties:')
         print(f'  Entry Diameter (D1): {self.D1} mm')
@@ -306,6 +347,7 @@ class Nozzle:
         print(f'  Divergent Length: {self.calculate_divergent_length():.2f} mm')
         print(f'  Total Length: {self.calculate_total_length():.2f} mm')
         print(f'  Mass: {self.mass} g')
+        self.draw_nozzle()
 
 # Example of creating a Nozzle object
 if __name__ == "__main__":
@@ -332,6 +374,12 @@ class RocketMotor:
         #self.bulkhead.display_properties()
         #self.nozzle.display_properties()
         motor_length = (self.combustion_chamber.Lc + self.combustion_chamber.Bo + self.nozzle.calculate_total_length())
+        #volumetric_loading_fraction
+        VLF = 1000*self.grain.grain_volume()/self.combustion_chamber.chamber_volume()
+        #Ap = (pi/4)*self.grain.dg0**2
+        #At = (pi/4)*self.nozzle.Dt0**2
+        #PtTR = Ap/At
+        PtTR = (self.grain.dg0/self.nozzle.Dt0)**2
         print(f'  Empty Mass: {self.empty_mass:.0f} g')
         print(f'  Propellant Mass (mg): {self.grain.grain_mass():.0f} g')
         print(f'  Initial Mass: {self.initial_mass:.0f} g')
@@ -339,11 +387,22 @@ class RocketMotor:
         print(f'  Chamber Internal Length: {self.combustion_chamber.Lc:.0f} mm')
         print(f'  Length: {motor_length:.0f} mm')
         print(f'  Throat Diameter (Dt): {self.nozzle.Dt0:.0f} mm')
+        print(f'  Volumetric Loading Fraction (VLF): {100*VLF:.1f}%')
+        print(f'  Port-to-throat ratio (Ap/At): {PtTR:.1f}')
+
 
 # Example of creating a RocketMotor object
 if __name__ == "__main__":
     rocket_motor = RocketMotor("Example Motor", grain, chamber, bulkhead, nozzle)
     rocket_motor.display_properties()
+
+
+def get_motor_by_name(name, list_of_motors):
+    matching_motors = []
+    for motor in list_of_motors:
+        if name == motor.name:
+            matching_motors.append(motor)
+    return matching_motors
 
 
 

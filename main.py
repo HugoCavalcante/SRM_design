@@ -13,8 +13,12 @@ from numpy import linspace, zeros, zeros_like, pi, sqrt, log2, mean, where, ceil
 from matplotlib.pyplot import figure, legend, show, xlabel, ylabel, plot
 from matplotlib.pyplot import subplot, subplots, tick_params, title
 from matplotlib.pyplot import tight_layout, grid, arrow
+from constants import*
+from geometry import *
 from rocket_motor_classes import *
 from propellants import *
+from motors import *
+
 
 #%% Choose which graphs to plot
 plot_Kn_vs_x = True 
@@ -23,237 +27,161 @@ plot_grain_geometry = True
 plot_P_vs_t = True
 plot_combustion_vs_t = True
 plot_F_vs_t = True
-draw_nozzle = True
+draw_nozzle = False
 plot_nozzle_vars = True
+save_thrust = False
 
-### A few parameters affecting the burning rate
-hc = 0.95       # combustion efficiency
-G_star = 1.0    # propellant 'erosive burning' area ratio threshold
-kv = 0.03       # propellant 'erosive burning' velocity coefficient
+### Many motors were predefined in 'motors.py'. You can see a list using:
+# print("List of predefined motors:")
+# for motor in list_of_motors:
+#     print(motor.name)
+#     ### At this time, you need to guess the name of the variable (object) 
+#     ### or take a look at 'motors.py'
+#     ### There is a function 'get_motor_by_name()'
+#
 
-
-#%%%  Parameters -------------------------------------------------------------
+### You can create your own motor, using the predefined materials and propellants defined in 'propellants.py' and the object classes defined in 'rocket_motor_classes.py'.
+### Here is an example:
+#### Parameters for Richard Nakka's Kappa (2001), class K, four BATES segments with inhibited outer surface.
 ######### Propellant grain parameters
-# Grain external diameter
-# D0 = 46.0 #21.4 #44.0 #369.0 #43.0 # External diameter of propellant grain, in mm (initial)
-# d0 = 30.0 #29.0 #18.0 # Diameter of the propellant grains hollow core, in mm (initial)
-# L0 = 294 #48.0 #294.0 #290.0 # Length of propellant grain (full, all segments), in mm
-# Nsegs = 1 #2 #4 #1 # Number of segments comprising the propellant grain
-# Lseg = L0/Nsegs # Length of each segment of the propellant grain
-
-# ### Inhibit external cylinder surface (for the BATES method)
-# inhibit_ext = False
-
-# ######### Combustion chamber parameters
-# Dc = 48.5 #25.4 #48.5 #75.0 #48.5  # Internal diameter of the chamber (mm)
-# Lc = 300 #48.0 #300.0 #470.0 #290.0 # Internal chamber length  (mm)
-# ### You can specify eiher dc or thickness
-# ###---------------------------------------------
-# #dc = 44.5 # Internal chamber diameter (mm)
-# #thickness = (Dc - dc)/2  # thichness of the combustion chamber wall (mm)
-# thickness = 2.0 #1.8 # thickness of the combustion chamber wall (mm)
-# dc = Dc - 2*thickness
-# ###---------------------------------------------
-# ### throat diameter (mm) (initial)
-# Dt0 = 18.0 #5.0 #15.6 #10.0 #18.0
-# ### throat diameter (mm) (final) 
-# Dtf = 20.0 #18.0 #14.0
-# ### Rate of increase in throat diameter (due to erosion) to regression. Usually set to 0, but important for a hole in a PVC cap. 
-# e_rate = 2*(Dtf-Dt0)/(D0-d0)
-
-mass_casing_wall = 594 #3.0 #594.0 # grams (just the tube) 
-mass_bulkhead = 108 #0.0 #108.0 #52.0 # grams
-mass_nozzle = 50 #5.0 #50.0 #40.0   # grams
-mc = mass_casing_wall + mass_bulkhead + mass_nozzle 
-
-
-######### A few motors 
-
-#### Richard Nakka's Impulser (2013), class I, four BATES segments with inhibited outer surface.
-#### May use KNDX or KNSB
-D0 = 34.8 # mm (1.5" - 2*0.065")
-d0 = 9.525 # mm (3/8")
-Nsegs = 4
-L0 = Nsegs*(1/2)*(3*D0+d0) # 227.85 mm
-Lseg = L0/Nsegs
-Dc = 38.1 # mm (1.5")
-dc = D0
-Lc = 293.116 # mm (11.54")
-thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
-Dt0 = 7.053 #6.706 # mm (0.264")
-Dtf = 7.086 #6.731
-inhibit_ext = True
-beta = 30 # nozzle covergence angle (degrees)
-alpha = 10 # nozzle divergence angle (degrees)
-De = dc # exit diameter at the end of the nozzle (mm)
-propellant = knsb
-#### 
-#### Impulser X (longer casing, five segments)
-D0 = 34.8 # mm (1.5" - 2*0.065")
-d0 = 9.525 # mm (3/8")
-Nsegs = 5
-L0 = Nsegs*(1/2)*(3*D0+d0) # 284.8 mm
-Lseg = L0/Nsegs
-Dc = 38.1 # mm (1.5")
-dc = D0
-Lc = 356.6 # mm (14.04")
-thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
-Dt0 = 8.640 #8.763 # mm (0.345")
-Dtf = 8.720 #8.843 
-inhibit_ext = True
-beta = 30 # nozzle covergence angle (degrees)
-alpha = 10 # nozzle divergence angle (degrees)
-De = dc # exit diameter at the end of the nozzle (mm)
-propellant = kndx 
-#########
-#### Impulser XX (even longer casing, six segments)
-D0 = 34.8 # mm (1.5" - 2*0.065")
-d0 = 9.525 # mm (3/8")
-Nsegs = 6
-L0 = Nsegs*(1/2)*(3*D0+d0) # 
-Lseg = L0/Nsegs
-Dc = 38.1 # mm (1.5")
-dc = D0
-Lc = 420.37 # mm (16.55")
-thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
-Dt0 = 9.804 #8.763 # mm (0.345")
-Dtf = 9.884 #8.843 
-inhibit_ext = True
-beta = 30 # nozzle covergence angle (degrees)
-alpha = 10 # nozzle divergence angle (degrees)
-De = dc # exit diameter at the end of the nozzle (mm)
-propellant = kndx 
-###
-##### Design parameter for the Impulser et al., according to Nakka
-###___________________________________________________________________________
-### Parameter      | units |   Impulser        |  Impulser-X  |  Impulser-XX  |
-### Propellant     |   -   |   KNSB   |  KNDX  |    KNDX      |    KNDX       |
-### Propel. mass   |   g   |   300    |   306  |    383       |     465       |
-### MEOP (max P)   |  MPa  |   6.9    |   6.9  |    6.9       |     6.9       |
-### Kn range       |   -   | 324-410  | 270-342|   270-342    |   265-330     |
-### throat diam.   |  mm   |   7.053  | 7.728  |    8.640     |    9.804      |
-### Max thrust     |   N   |    400   |   500  |     625      |     750       |
-### Thrust duration|   s   |    1.1   |   0.9  |     0.9      |     0.9       |
-### Total impulse  |   Ns  |    380   |   400  |     500      |     600       |
-###________________|_______|__________|________|______________|_______________|
-###
-###
-
-#### Richard Nakka's Kappa (2001), class K, four BATES segments with inhibited outer surface.
-D0 = 55.1 # mm (2.170")
-d0 = 19.05# mm (3/4")
-Nsegs = 4
-L0 = Nsegs*(1/2)*(3*D0+d0) # 
-Lseg = L0/Nsegs
-Dc = 63.5 # mm (2.5")
-dc = D0
-Lc = 462 # mm (18.2")
-thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
-Dt0 = 12.75 # mm (0.502")
-Dtf = 12.75 
-inhibit_ext = True
-beta = 45 # nozzle covergence angle (degrees)
-alpha = 12 # nozzle divergence angle (degrees)
-De = 53.85 # exit diameter at the nozzle (mm)
-propellant = kndx 
-### Results for the Kappa
-###____________________________________________
-### Parameter      | units |       Kappa       |
-### Propellant     |   -   |   KNDX   |  KNSB  |
-### Propel. mass   |   g   |   1500   |  1500  |
-### MEOP (max P)   |  MPa  |   8.5    |   8.5  |
-### Kn range       |   -   | 320-380  |    -   |
-### throat diam.   |  mm   |   12.75  |    -   |
-### Max thrust     |   N   |    1580  |  1620  |
-### Thrust duration|   s   |    1.5   |1.5-2.0 |
-### Total impulse  |   Ns  |   2003   |  1821* |
-### Specif. impulse|   s   |   137    |  125   |
-###________________|_______|__________|________|
-#### *predicted 1987 Ns
-###
-
-#### Richard Nakka's Juno, class J, single hollow grain, no inhibitors, regressive profile
-D0 = 45 # mm (2.170")
-d0 = 15 # ?  
-Nsegs = 1
-#L0 = Nsegs*(1/2)*(3*D0+d0) # 
-L0 = 300 # ?
-Lseg = L0/Nsegs
-Dc = 48 # mm (1.875")
-dc = D0
-Lc = 338 # mm (13.3")
-thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
-Dt0 = 15 # mm (0.590")
-Dtf = 15 
-inhibit_ext = False
-beta = 30 # nozzle covergence angle (degrees)
-alpha = 12 # nozzle divergence angle (degrees)
-De = 42.4 # exit diameter at the nozzle (mm)
-propellant = kndx 
-### Results for the Juno
-###____________________________________________
-### Parameter      | units |       Juno        |
-### Propellant     |   -   |   KNDX   |  KNSB  |
-### Propel. mass   |   g   |    650   |        |
-### MEOP (max P)   |  MPa  |    6.9   |        |
-### Kn range       |   -   |  285-312 |    -   |
-### throat diam.   |  mm   |    15    |    -   |
-### Max thrust     |   N   |    1740  |        |
-### Thrust duration|   s   |    0.56  |        |
-### Total impulse  |   Ns  |    885   |        |
-### Specif. impulse|   s   |    139   |        |
-###________________|_______|__________|________|
-###
-
-
-
-
-#########
-e_rate = 2*(Dtf-Dt0)/(D0-d0)
-
-
-#%%%% Choice to the propellant to be used
+D0 = 55.1  # External diameter of propellant grain, in mm (initial)
+d0 = 19.05 # Diameter of the propellant grains hollow core, in mm (initial)
+Nsegs = 4  # Number of segments comprising the propellant grain
+L0 = Nsegs*(1/2)*(3*D0+d0) # Length of propellant grain (full, all segments), in mm (including segment separators)
+Lseg = L0/Nsegs # Length of each segment of the propellant grain (subtract separators, if necessary)
+inhibit_ext = True   # A Boolean indicating whether the external surface of the grain is inhibited from burning
+propellant = kndx    # Choice to the propellant to be used
 #propellant = knsb
-### You can see the available propellants in the variable 'list_of_propellants'
-# print(list_of_propellants)
+### You can list the propellants names stored in 'list_of_propellants'
+# print("List of predefined propellants:")
+# for prop in list_of_propellants:
+#     print(prop.prop_name)
 ### You can also get the propellant object by its exact name:
 # propellant = get_prop_by_name("KNSB fine", list_of_propellants)
 ### or a list of propellants made with a specific fuel
-#print(get_prop_by_name("sorbitol", list_of_propellants)) 
+#sorbitol_propellants = get_prop_by_name("sorbitol", list_of_propellants)
+
+### A few parameters affecting the burning rate
+# hc = 0.95       # combustion efficiency
+# G_star = 1.0    # propellant 'erosive burning' area ratio threshold
+# kv = 0.03       # propellant 'erosive burning' velocity coefficient
+
+
+######### Combustion chamber parameters
+Dc = 63.5  # mm (2.5")
+dc = D0    # Internal diameter of the chamber (mm)
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm) 
+### alternativelly, calculate the internal diameter from the known thickness
+# thickness = 2.0 #1.8 # thickness of the combustion chamber wall (mm)
+# dc = Dc - 2*thickness
+Lc = 462   # Internal available chamber length  (mm)
+
+######### Nozzle and throat parameters
+Dt0 = 12.75 # Throat initial diameter, in mm (may grow due to erosion)
+Dtf = 12.75 # Throat final diameter, in mm (can be equal to Dt0, neglecting erosion, or larger)
+Lt = 1      # Length of the throat, in mm 
+### Rate of increase in throat diameter (due to erosion) to regression. Usually set to 0, but important for a hole in a PVC cap. 
+### e_rate = 2*(Dtf-Dt0)/(D0-d0)
+
+beta = 45   # nozzle convergence angle (degrees)
+alpha = 12  # nozzle divergence angle (degrees)
+De = 53.85  # exit diameter at the nozzle (mm)
+
+#### creating the objects
+my_grain = Grain(Dg0=D0, dg0=d0, Lg0=L0, Nsegs=Nsegs, Lseg=Lseg, 
+                 inhibit_ext=inhibit_ext, propellant = propellant, 
+                 hc=0.95, G_star=1, kv=0.03)
+my_bulkhead = Bulkhead(steel, 10, rho_steel*cyl_vol(dc/10, 0, 10/10))
+my_casing = CombustionChamber(Dc, dc, Lc, 30, 30, steel)
+my_nozzle = Nozzle(dc, Dt0, Dtf, Lt, beta, alpha, De=dc, mass = 70)
+
+my_motor = RocketMotor("My motor", grain = my_grain, 
+                       combustion_chamber = my_casing, bulkhead=my_bulkhead, 
+                       nozzle=my_nozzle)
+
+
+
+### If you are using a predefined motor, don't forget to create variables to store the parameters for the simulation and extract their values from the motor:
+my_motor = carcara
+## grain and propellant
+D0 = my_motor.grain.Dg0
+d0 = my_motor.grain.dg0
+L0 = my_motor.grain.Lg0
+Nsegs = my_motor.grain.Nsegs
+Lseg = my_motor.grain.Lseg
+inhibit_ext = my_motor.grain.inhibit_ext
+propellant = my_motor.grain.propellant
+hc = my_motor.grain.hc
+G_star = my_motor.grain.G_star
+kv = my_motor.grain.kv 
+## chamber
+Dc = my_motor.combustion_chamber.Dc
+dc = my_motor.combustion_chamber.dc
+Lc = my_motor.combustion_chamber.Lc
+## nozzle
+Dt0 = my_motor.nozzle.Dt0
+Dtf = my_motor.nozzle.Dtf
+alpha = my_motor.nozzle.alpha
+beta = my_motor.nozzle.beta
+De = my_motor.nozzle.De
+
+my_grain = my_motor.grain 
+my_bulkhead = my_motor.bulkhead
+my_casing = my_motor.combustion_chamber
+my_nozzle = my_motor.nozzle
+### 
+
+
+#%%%  Parameters -------------------------------------------------------------
+### we can calculate some of the parameters, or bypass the calculation
+mass_bulkhead = my_motor.bulkhead.mass
+mass_casing_wall = my_motor.combustion_chamber.casing_mass()
+mass_nozzle = my_motor.nozzle.mass
+
+#mass_casing_wall = 594 # grams (just the tube) 
+#mass_bulkhead = 108    # grams
+#mass_nozzle = 50       # grams
+### Total motor mass (empty)
+mc = mass_casing_wall + mass_bulkhead + mass_nozzle 
+### Propellant mass
+mg0 = my_motor.grain.grain_mass() # in grams
+### Total motor mass (loaded)
+m0 = mc+mg0
+
+#### Every class has a 'display_properties()' function:
+my_grain.display_properties()
+print('')
+my_nozzle.display_properties()
+print('')
+my_motor.display_properties()
+
 
 prop_name, fuel_name = propellant.prop_name, propellant.fuel_name
-rho_f = propellant.fuel_density
+#rho_f = propellant.fuel_density
+rho_p = my_motor.grain.grain_mass()/my_motor.grain.grain_volume()
 Kn_vs_P_params = propellant.Kn_vs_P_params
 
 print(f"Using propellant {prop_name} (KNO3 + {fuel_name})")
-propellant.display_info()
+propellant.display_properties()
 
-### Mass densities of oxidizer rho_o and fuel rho_f (g/cm³)
-# rho_o = rho_KNO3
-# rho_f = rho_sucrose
-# rho_cata = rho_sulphur
-rho_o = propellant.oxidizer_density
-rho_f = propellant.fuel_density
-rho_cata = propellant.cata_density
+# # ### Mass densities of oxidizer rho_o and fuel rho_f (g/cm³)
+# # rho_o = propellant.oxidizer_density
+# # rho_f = propellant.fuel_density
+# # rho_cata = propellant.cata_density
 
+# ### Propellent composition (mass fractions of oxidizer, fuel and catalyst)
+# ### A standard is 65/35/0
+# ### For blackpowder: 75% oxi/15% charcoal / 10% sulphur
+# mass_fraction_oxi = propellant.oxi_mass_fraction
+# mass_fraction_fuel = propellant.fuel_mass_fraction
+# mass_fraction_cata = propellant.cata_mass_fraction
 
-### Propellent composition (mass fractions of oxidizer, fuel and catalyst)
-### A standard is 65/35/0
-### For blackpowder: 75% oxi/15% charcoal / 10% sulphur
-mass_fraction_oxi = propellant.oxi_mass_fraction
-mass_fraction_fuel = propellant.fuel_mass_fraction
-mass_fraction_cata = propellant.cata_mass_fraction
+# ### propellant mass density (g/cm³)
+# rho_p = 1.0/(mass_fraction_oxi/rho_o + mass_fraction_fuel/rho_f +mass_fraction_cata/rho_cata)
+# non_ideal_density_factor = 0.95
+# rho_p = rho_p*non_ideal_density_factor
 
-### propellant mass density (g/cm³)
-rho_p = 1.0/(mass_fraction_oxi/rho_o + mass_fraction_fuel/rho_f +mass_fraction_cata/rho_cata)
-non_ideal_density_factor = 0.95
-rho_p = rho_p*non_ideal_density_factor
-
-print(f"Propellent effective density = {rho_p:.4g} g/cm³.")
-
-### Choosing the material for the combustion chamber
-#rho_chamber = rho_steel
-rho_chamber = rho_aluminum
+# print(f"Propellent effective density = {rho_p:.4g} g/cm³.")
 
 
 #%% Functions definitions ----------------------------------------------------
@@ -263,27 +191,11 @@ rho_chamber = rho_aluminum
 #         and r is the burning rate (length/time)."""
 #     return Ab*rho_p*r
 
-def hcylinder_area(D, d, L):
-    """ Area of the surfaces of a hollow cylinder.
-    A = pi*D*L + pi*d*L + pi(D²-d²)/2. D is the external diameter, d is the hollow diameter,
-    L is the length (height). """
-    return pi*(L*(D+d) +(D**2-d**2)/2)
-
-def BATES_area(D, d, L):
-    """ Area of the surfaces of a hollow cylinder  without external side surface (BATES).
-    A = pi*d*L + pi(D²-d²)/2. D is the external diameter, d is the hollow diameter,
-    L is the length (height). """
-    return pi*(L*d +(D**2-d**2)/2)
-
-def cyl_vol(D, d, L):
-    """ Volume of a hollow cylinder."""
-    return pi*(D**2-d**2)*L/4
-
-def deSaintRobert(P):
-    """ Model of de Saint Robert for burn rate dependence on pressure.
-        r = r_0 a*Pc^n , r_0, a and n are constants. """
-    r_0 = 0; a = 7.0; n = 0.625
-    return r_0 +a*P**n
+# def deSaintRobert(P):
+#     """ Model of de Saint Robert for burn rate dependence on pressure.
+#         r = r_0 + a*Pc^n , r_0, a and n are constants. """
+#     r_0 = 0; a = 7.0; n = 0.625
+#     return r_0 +a*P**n
 
 # def Kn_vs_P(P, params):
 #     """ Empirical curve of Kn ('Klemmung') vs pressure (in MPa), for various propellants.
@@ -296,6 +208,8 @@ def deSaintRobert(P):
 #     return Kn
 
 ### ---------------------------------------------------------------------------
+
+
 
 
 #%% Initial calculations
@@ -311,30 +225,24 @@ elif Dc <= dc:
     raise SystemExit
 
 
-### Initial mass of grain in grams, (estimated from geometry and density)
-# Volume of propellant (cm³)
-Vp = cyl_vol(D0/10, d0/10, L0/10) # Notice that we transform the dimensions given in mm to cm
-mg0 = rho_p*Vp
-
-### we can estimate the mass of the casing mc, if not known
-##mass_casing_wall = rho_chamber*cyl_vol(Dc/10, dc/10, Lc/10)
-mc = mass_casing_wall + mass_bulkhead + mass_nozzle
-m0 = mg0 + mc
-
-print(f"Mass prop = {mg0:.4g} g, Mass casing = {mc:.4g} g, Total mass = {m0:.4g} g.")
-
-Va = cyl_vol(dc/10, 0.0, Lc/10) # volume available in the chamber (cm³)
+#Va = cyl_vol(dc/10, 0.0, Lc/10) # volume available in the chamber (cm³)
+Va = my_motor.combustion_chamber.chamber_volume()/1000  
+Vp = my_motor.grain.grain_volume()
 ### Volumetric loading fraction (Vl) 
 Vl = Vp/Va
 ### "Web thickness" Wf = (Dp - dp)/Dp
 Wf0 = (D0-d0)/D0
 ### Burning area (mm²)
-Ab0 = Nsegs*hcylinder_area(D0, d0, L0/Nsegs)
+#Ab0 = Nsegs*hcylinder_area(D0, d0, L0/Nsegs)
+Ab0 = Nsegs*hcylinder_area(D0, d0, Lseg)
 ### Throat area (mm²)
 At0 = pi*(Dt0**2)/4
-Ap0 = pi*(D0**2)*(1-Vl)/4
-
-print(f"Volumetric loading fraction = {Vl:.4g}, Web fraction  = {Wf0:.4g}, Port-to-throat ratio = {Ap0/At0:.4g}.")
+### Port area (section of the grain where fluid flows over the surface, potentially causing erosive burning)
+#Ap0 = pi*(D0**2)*(1-Vl)/4
+### Port-to-throat area ratio
+PtTR = (my_motor.grain.dg0/my_motor.nozzle.Dt0)**2
+#print(f"Volumetric loading fraction = {Vl:.4g}, Web fraction  = {Wf0:.4g}, Port-to-throat ratio = {Ap0/At0:.4g}.")
+print(f"Volumetric loading fraction = {Vl:.4g}, Web fraction  = {Wf0:.4g}, Port-to-throat ratio = {PtTR:.4g}.")
 
 #%% Kn vs P
 ### Kn ('Klemmung') is the ratio Ab/At and is modeled as depending on the chamber pressure.
@@ -378,6 +286,8 @@ if inhibit_ext:
 else:
     Ab = Nsegs*hcylinder_area(D, d, L/Nsegs)
 
+
+e_rate = 2*(Dtf-Dt0)/(D0-d0)
 #Dt = Dt0+e_rate*(tweb[0]-tweb)/tweb[0]
 Dt = Dt0+e_rate*(tweb[0]-tweb)
 At = (pi/4)*Dt**2
@@ -417,6 +327,7 @@ G = where(G>=0, G, 0.0)
 ### ideal throat area (m²) (should be equal to the throat area)
 A_star0 = At0/1e6
 A_star = At/1e6
+
 
 M = propellant.M   # effective molecular mass of products (g/mol)
 R = R_prime/M  # specific gas constant J/gK
@@ -461,14 +372,17 @@ dmdt_sto = zeros_like(Po)
 dmdt_sto[0] = dmdt_prod[0]-dmdt_flow[0]
 # mass of combustion products stored in the chamber (kg)
 m_sto = zeros_like(Po)
-m_sto[0] = 0.0
+#m_sto[0] = 0.0
 # ejection velocity (m/s) (column AI, in the spreadsheet)
 #ve = zeros_like(Po)
 #ve[0] = 0.0 # m/s
 
 ### density of combustion products in chamber (kg/m³)
 rho_prod = zeros_like(Po)
-rho_prod[0] = 0.0
+#rho_prod[0] = 0.0  
+### P = rho_prod R T
+rho_prod[0] = 1e6*Patm/(1000*R*To_act)
+m_sto[0] = rho_prod[0]*Vfree[0]
 
 for i in range(1, N_web):
     if inhibit_ext:
@@ -588,7 +502,7 @@ F2[N_web:] = (Po[N_web:]-Patm)*At[-1]
 ### Correct:
 ### F = m_dot v_2 +(P2-Patm)*A2
 ### v2 = sqrt( (2k/(k-1))R T1 [1-(P2/P1)^((k-1)/2)] +v1^2 )
-### Let's assume P1 = Po, v1 = 0, T1 = To_act
+### Let's assume P1 = Po, v1 = 0, T1 = To_act and Pe = Patm
 ve = sqrt((2*k/(k-1))*1000*R*To_act*(1-(Patm/Po)**((k-1)/k)))
 F1 = dmdt_flow*ve 
 
@@ -725,8 +639,6 @@ if draw_nozzle:
 ###
 ###
 
-
-
 ### Nozzle area expansion ratio (Ae/At)
 exprat0 = (De/Dt0)**2
 exprat = (De/Dt)**2
@@ -748,54 +660,56 @@ De_opt = sqrt(Ae/At_opt_smart)*Dt0
 ### cP = cV + R, k = cP/cV, so cP = R(k/(k-1))
 ### To = T + v²/(2cP)
 Te = To_act - (ve**2)/2/R/k*(k-1)/1000
-### local sound velocity at exit
+#### local sound velocity at exit
 vse = sqrt(k*1000*R*Te)
-### Mach number at exit
+# ### Mach number at exit
 Me = ve/vse #3.0 ### ?
-### Exit Pressure (MPa)
+# ### Exit Pressure (MPa)
 Pe = Po/(1+(k-1)/2*Me**2)**(k/(k-1))
-Pe = where(Pe>=Patm, Pe, Patm)
+# #Pe = where(Pe>=Patm, Pe, Patm)
 
-### Correcting the exit velocity with the true exit pressure 
-#ve = sqrt(1000*R*To_act/k)*((k+1)/2)**((3-k)/(2*k-2))
-v2 = sqrt(2*To_act*1000*R*(k/(k-1))*(1-(Pe/Po)**((k-1)/2)))
-
-T2 = To_act - (v2**2)/2/R/k*(k-1)/1000
-vs2 = sqrt(k*1000*R*T2)
-M2 = v2/vs2 
-P2 = Po/(1+(k-1)/2*M2**2)**(k/(k-1))
-P2 = where(P2>=Patm, P2, Patm)
-v3 = sqrt(2*To_act*1000*R*(k/(k-1))*(1-(P2/Po)**((k-1)/2)))
-
-T3 = To_act - (v3**2)/2/R/k*(k-1)/1000
-vs3 = sqrt(k*1000*R*T3)
-M3 = v3/vs3 
-P3 = Po/(1+(k-1)/2*M3**2)**(k/(k-1))
-P3 = where(P3>=Patm, P3, Patm)
-
-v4 = sqrt(2*To_act*1000*R*(k/(k-1))*(1-(P3/Po)**((k-1)/2)))
+# ### Correcting the exit velocity with the true exit pressure 
+# #ve = sqrt(1000*R*To_act/k)*((k+1)/2)**((3-k)/(2*k-2))
+# v2 = sqrt(2*To_act*1000*R*(k/(k-1))*(1-(Pe/Po)**((k-1)/k)))
+# #v2 = sqrt((2*k/(k-1))*1000*R*To_act*(1-(Pe/Po)**((k-1)/k)))
 
 
-#c = where(dmdt_flow > 0.01, v4 - (P3-Patm)*Ae/dmdt_flow , 0.0) 
-#c = where(c>=0.0, c, Patm)
-c = ve - (Pe-Patm)*Ae/dmdt_flow_ave
+# T2 = To_act - (v2**2)/2/R/k*(k-1)/1000
+# vs2 = sqrt(k*1000*R*T2)
+# M2 = v2/vs2 
+# P2 = Po/(1+(k-1)/2*M2**2)**(k/(k-1))
+# P2 = where(P2>=Patm, P2, Patm)
+# v3 = sqrt(2*To_act*1000*R*(k/(k-1))*(1-(P2/Po)**((k-1)/k)))
+
+# T3 = To_act - (v3**2)/2/R/k*(k-1)/1000
+# vs3 = sqrt(k*1000*R*T3)
+# M3 = v3/vs3 
+# P3 = Po/(1+(k-1)/2*M3**2)**(k/(k-1))
+# P3 = where(P3>=Patm, P3, Patm)
+
+# v4 = sqrt(2*To_act*1000*R*(k/(k-1))*(1-(P3/Po)**((k-1)/k)))
 
 
-### Recalculating the force
-### F = m_dot v_2 +(P2-Patm)*A2
-F3 = dmdt_flow*v2 +(Pe-Patm)*Ae
-F4 = dmdt_flow*v3 +(P2-Patm)*Ae
-F5 = dmdt_flow*v4 +(P3-Patm)*Ae
+# #c = where(dmdt_flow > 0.01, v4 - (P3-Patm)*Ae/dmdt_flow , 0.0) 
+# #c = where(c>=0.0, c, Patm)
+# c = ve - (Pe-Patm)*Ae/dmdt_flow_ave
 
 
-#figure('Force corrected')
-#plot(t,F3)
-ax_force.plot(t, F3, label = '$F_3$')
-ax_force.plot(t, F4, label = '$F_4$')
-ax_force.plot(t, F5, label = '$F_5$')
-#xlabel('time (s)')
-#ylabel('$F$ (N)')
-ax_force.legend()
+# ### Recalculating the force
+# ### F = m_dot v_2 +(P2-Patm)*A2
+# F3 = dmdt_flow*v2 +(Pe-Patm)*Ae
+# F4 = dmdt_flow*v3 +(P2-Patm)*Ae
+# F5 = dmdt_flow*v4 +(P3-Patm)*Ae
+
+
+# #figure('Force corrected')
+# #plot(t,F3)
+# ax_force.plot(t, F3, label = '$F_3$')
+# ax_force.plot(t, F4, label = '$F_4$')
+# ax_force.plot(t, F5, label = '$F_5$')
+# #xlabel('time (s)')
+# #ylabel('$F$ (N)')
+# ax_force.legend()
 
 
 
@@ -861,13 +775,27 @@ if plot_nozzle_vars:
     tick_params('x', labelbottom=False)
     ax4 = subplot(4,1,4, sharex=ax1)
     plot(t, Pe, label = '$P_e$ (MPa)')
-    plot(t, P2, label = '$P_2$ (MPa)')
-    plot(t, P3, label = '$P_3$ (MPa)')
+    #plot(t, P2, label = '$P_2$ (MPa)')
+    #plot(t, P3, label = '$P_3$ (MPa)')
     ylabel('exit pressure (MPa)')
     #legend()
     xlabel('time (s)')
     legend()
 ####
+
+
+### Export thrust vs time to a CSV file
+### The file will have two columns, separated by comma: time (s) and thrust force (N)
+if save_thrust:
+    from numpy import savetxt, array
+    N_points = 300 
+    jump = int (len(t)/N_points)
+    data_to_save = array((t[::jump], F1[::jump])).transpose()
+    output_filename = my_motor.name + '.csv'
+    try:
+        savetxt(output_filename, data_to_save, delimiter=',')
+    except:
+        print("Problem saving output file: {output_filename}.")
 
 
 

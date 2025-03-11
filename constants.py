@@ -36,4 +36,6 @@ rho_steel = 6.777 #7.85
 rho_aluminum = 2.65
 rho_epoxy = 1.25
 rho_PVC = 1.4
+rho_cardboard = 0.75
+ 
 
