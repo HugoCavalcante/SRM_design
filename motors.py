@@ -340,9 +340,9 @@ Dt0 = 18 # mm
 Dtf = 18 
 inhibit_ext = False
 Lt = 2.0 # mm (throat length)
-beta = 85 # nozzle covergence angle (degrees)
-alpha = 85 # nozzle divergence angle (degrees)
-De = 18.1 # exit diameter at the nozzle (mm)
+beta = 45 # nozzle covergence angle (degrees)
+alpha = 12 # nozzle divergence angle (degrees)
+De = dc # exit diameter at the nozzle (mm)
 propellant = knxy 
 
 carcara_grain = Grain(D0, d0, L0, Nsegs, Lseg, inhibit_ext, propellant, 0.95, 1.0, 0.03)
@@ -358,6 +358,41 @@ carcara = RocketMotor("Carcara v0", carcara_grain, carcara_casing, carcara_bulkh
 list_of_motors.append(carcara)
 ###############################################################################
 
+###############################################################################
+##### Carcara - v0.1 Nozzleless (we made throat without the conic expansion part)
+D0 = 42 # mm
+d0 = 26 # mm 
+Nsegs = 1
+#L0 = Nsegs*(1/2)*(3*D0+d0) # 
+L0 = 294 
+Lseg = L0/Nsegs
+Dc = 48.5 # mm 
+dc = 44.5
+Lc = 300 # mm 
+Bo = 14 # mm (offset for the bulkhead: L_ext = Lc + B0 + No)
+No = 14 # mm (offset for the nozzle)
+thickness = (Dc - dc)/2  # thickness of the combustion chamber wall (mm)
+Dt0 = 18 # mm 
+Dtf = 18 
+inhibit_ext = False
+Lt = 2.0 # mm (throat length)
+beta = 85 # nozzle covergence angle (degrees)
+alpha = 85 # nozzle divergence angle (degrees)
+De = 18.1 # exit diameter at the nozzle (mm)
+propellant = knxy 
+
+carcara_grain = Grain(D0, d0, L0, Nsegs, Lseg, inhibit_ext, propellant, 0.95, 1.0, 0.03)
+list_of_grains.append(carcara_grain)
+carcara_bulkhead = Bulkhead(steel, 18, 108)
+list_of_bulkheads.append(carcara_bulkhead)
+carcara_casing = CombustionChamber(Dc, dc, Lc, Bo, No, steel)
+### m_casing is 594 g (measured)
+### total motor mass (empty) should be 752 g
+list_of_casings.append(carcara_casing)
+carcara_NL_nozzle = Nozzle(dc, Dt0, Dtf, Lt, beta, alpha, De, 50)
+carcara_NL = RocketMotor("Carcara v0.1 NL", carcara_grain, carcara_casing, carcara_bulkhead, carcara_NL_nozzle)
+list_of_motors.append(carcara_NL)
+###############################################################################
 
 
 

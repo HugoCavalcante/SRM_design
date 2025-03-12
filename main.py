@@ -9,7 +9,8 @@ Created on Thu Feb  6 11:19:46 2025
 """
 
 #%% Modules imports
-from numpy import linspace, zeros, zeros_like, pi, sqrt, log2, mean, where, ceil, tan
+from numpy import linspace, zeros, zeros_like, ones, concatenate, where 
+from numpy import pi, mean, sqrt, log2, ceil, tan
 from matplotlib.pyplot import figure, legend, show, xlabel, ylabel, plot
 from matplotlib.pyplot import subplot, subplots, tick_params, title
 from matplotlib.pyplot import tight_layout, grid, arrow
@@ -27,9 +28,9 @@ plot_grain_geometry = True
 plot_P_vs_t = True
 plot_combustion_vs_t = True
 plot_F_vs_t = True
-draw_nozzle = False
+draw_nozzle = True
 plot_nozzle_vars = True
-save_thrust = False
+save_thrust = True
 
 ### Many motors were predefined in 'motors.py'. You can see a list using:
 # print("List of predefined motors:")
@@ -102,7 +103,7 @@ my_motor = RocketMotor("My motor", grain = my_grain,
 
 
 ### If you are using a predefined motor, don't forget to create variables to store the parameters for the simulation and extract their values from the motor:
-my_motor = carcara
+my_motor = carcara_NL
 ## grain and propellant
 D0 = my_motor.grain.Dg0
 d0 = my_motor.grain.dg0
@@ -151,7 +152,7 @@ m0 = mc+mg0
 #### Every class has a 'display_properties()' function:
 my_grain.display_properties()
 print('')
-my_nozzle.display_properties()
+my_nozzle.display_properties(draw_nozzle)
 print('')
 my_motor.display_properties()
 
@@ -505,6 +506,12 @@ F2[N_web:] = (Po[N_web:]-Patm)*At[-1]
 ### Let's assume P1 = Po, v1 = 0, T1 = To_act and Pe = Patm
 ve = sqrt((2*k/(k-1))*1000*R*To_act*(1-(Patm/Po)**((k-1)/k)))
 F1 = dmdt_flow*ve 
+### Notice that, without a nozzle, Pe = Po ~= P1, and ve ~= v1
+exprat0 = (De/Dt0)**2
+if exprat0 <1.1:
+    A_duct = concatenate((A_duct, A_duct[-1]*ones(N_P-N_web)))
+    Dt = concatenate((Dt, Dt[-1]*ones(N_P-N_web)))
+    F1 = 1e6*dmdt_flow**2/rho_prod/A_duct +(Po-Patm)*circle_area(Dt)
 
 dmdt_flow_ave = mean(dmdt_flow)
 P1 = mean(Po)
@@ -585,26 +592,26 @@ L_nozzle_t = 2.0 #25.0 # mm
 L_nozzle = L_nozzle_c + L_nozzle_d + L_nozzle_t ## mm 
 #########
 
-### block to draw nozzle geometry
-if draw_nozzle:
-    # figure('Nozzle geometry', figsize = (3,3.5))
-    fig, ax = subplots()
+### block to draw nozzle geometry (moved to rocket_motor_classes.Nozzle.draw_nozzle() and rocket_motor_classes.Nozzle.display_properties())
+# if draw_nozzle:
+#     # figure('Nozzle geometry', figsize = (3,3.5))
+#     fig, ax = subplots()
     
-    plot([-L_nozzle_t/2-(Dtf-Dt0)/tan(alpha_rad)/2, L_nozzle_t/2+(Dtf-Dt0)/tan(beta_rad)/2],
-         [Dtf/2, Dtf/2], lw = 2, color = 'red')
-    plot([-L_nozzle_t/2-(Dtf-Dt0)/tan(alpha_rad)/2, L_nozzle_t/2+(Dtf-Dt0)/tan(beta_rad)/2],
-         [-Dtf/2, -Dtf/2], lw = 2, color = 'red')
-    plot([-L_nozzle_d-L_nozzle_t/2, -L_nozzle_t/2, L_nozzle_t/2, L_nozzle_t/2+L_nozzle_c], 
-         [De/2, Dt0/2, Dt0/2, dc/2], lw = 2, color = 'black')
-    plot([-L_nozzle_d-L_nozzle_t/2, -L_nozzle_t/2, L_nozzle_t/2, L_nozzle_t/2+L_nozzle_c], 
-         [-De/2, -Dt0/2, -Dt0/2, -dc/2], lw = 2, color = 'black')
+#     plot([-L_nozzle_t/2-(Dtf-Dt0)/tan(alpha_rad)/2, L_nozzle_t/2+(Dtf-Dt0)/tan(beta_rad)/2],
+#          [Dtf/2, Dtf/2], lw = 2, color = 'red')
+#     plot([-L_nozzle_t/2-(Dtf-Dt0)/tan(alpha_rad)/2, L_nozzle_t/2+(Dtf-Dt0)/tan(beta_rad)/2],
+#          [-Dtf/2, -Dtf/2], lw = 2, color = 'red')
+#     plot([-L_nozzle_d-L_nozzle_t/2, -L_nozzle_t/2, L_nozzle_t/2, L_nozzle_t/2+L_nozzle_c], 
+#          [De/2, Dt0/2, Dt0/2, dc/2], lw = 2, color = 'black')
+#     plot([-L_nozzle_d-L_nozzle_t/2, -L_nozzle_t/2, L_nozzle_t/2, L_nozzle_t/2+L_nozzle_c], 
+#          [-De/2, -Dt0/2, -Dt0/2, -dc/2], lw = 2, color = 'black')
     
-    ax_x_lims = ax.get_xlim()
-    ax_y_lims = ax.get_ylim()
-    ax.set_box_aspect((ax_y_lims[1]-ax_y_lims[0])/(ax_x_lims[1]-ax_x_lims[0]))
-    grid()
-    arrow(0,0, -L_nozzle/5, 0, width = 0.8)
-    #fig.tight_layout()
+#     ax_x_lims = ax.get_xlim()
+#     ax_y_lims = ax.get_ylim()
+#     ax.set_box_aspect((ax_y_lims[1]-ax_y_lims[0])/(ax_x_lims[1]-ax_x_lims[0]))
+#     grid()
+#     arrow(0,0, -L_nozzle/5, 0, width = 0.8)
+#     #fig.tight_layout()
 
 
 # %%% Third spreadsheet in Nakka's SRM_2023: "Performance"
@@ -644,7 +651,7 @@ exprat0 = (De/Dt0)**2
 exprat = (De/Dt)**2
 ### Nozzle exit area Ae
 #Ae = exprat*At
-Ae = mean(exprat*At)
+Ae = mean(exprat)*mean(At)
 ### Optimum nozzle area (mm²)  (using the equation for Pe = Patm)
 At_opt = Ae*((k+1)/2)**(1/(k-1)) * (Patm/Po)**(1/k) * sqrt(((k+1)/(k-1))*(1-(Patm/Po)**((k-1)/k)))
 

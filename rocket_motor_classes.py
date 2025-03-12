@@ -334,7 +334,7 @@ class Nozzle:
         arrow(0,0, -L_nozzle/5, 0, width = 0.8)
 
 
-    def display_properties(self):
+    def display_properties(self, draw_nozzle=True):
         print('Nozzle Properties:')
         print(f'  Entry Diameter (D1): {self.D1} mm')
         print(f'  Initial Throat Diameter (Dt0): {self.Dt0} mm')
@@ -347,7 +347,8 @@ class Nozzle:
         print(f'  Divergent Length: {self.calculate_divergent_length():.2f} mm')
         print(f'  Total Length: {self.calculate_total_length():.2f} mm')
         print(f'  Mass: {self.mass} g')
-        self.draw_nozzle()
+        if draw_nozzle:
+            self.draw_nozzle()
 
 # Example of creating a Nozzle object
 if __name__ == "__main__":
