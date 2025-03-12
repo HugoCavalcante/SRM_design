@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Objects to be used in my_rocket_motor.py. Mostly proppelants.
+Objects to be used in my_rocket_motor.py. Mostly propellants.
+But also structural materials. Later we might include fuels, oxidizers and catalysts.
 Created on Sat Feb 15 13:37:48 2025
 
 @author: hugo
@@ -9,7 +10,8 @@ Created on Sat Feb 15 13:37:48 2025
 
 #import rocket_motor_classes 
 from rocket_motor_classes import *
-list_of_proppelants = []
+list_of_propellants = []
+list_of_materials = []
 
 #%%%% Definitions of the many propellants we can use
 knsu = Propellant(
@@ -30,7 +32,7 @@ knsu = Propellant(
     k=1.133,
     To=1720
 )
-list_of_proppelants.append(knsu)
+list_of_propellants.append(knsu)
 
 kndx = Propellant(
     prop_name="KNDX",
@@ -50,7 +52,7 @@ kndx = Propellant(
     k=1.131,  # ratio of specific heats
     To=1710  # combustion temperature in K
 )
-list_of_proppelants.append(kndx)
+list_of_propellants.append(kndx)
 
 knsb_fine = Propellant(
     prop_name="KNSB fine",
@@ -70,9 +72,9 @@ knsb_fine = Propellant(
     k=1.137,  # ratio of specific heats
     To=1600  # combustion temperature in K
 )
-list_of_proppelants.append(knsb_fine)
+list_of_propellants.append(knsb_fine)
 knsb = knsb_fine
-list_of_proppelants.append(knsb)
+list_of_propellants.append(knsb)
 
 knsb_coarse = Propellant(
     prop_name="KNSB coarse",
@@ -92,7 +94,7 @@ knsb_coarse = Propellant(
     k=1.137,  # ratio of specific heats
     To=1600  # combustion temperature in K
 )
-list_of_proppelants.append(knsb_coarse)
+list_of_propellants.append(knsb_coarse)
 
 knxy = Propellant(
     prop_name="KNXY",
@@ -112,7 +114,7 @@ knxy = Propellant(
     k=1.137,  # ratio of specific heats
     To=1600  # combustion temperature in K
 )
-list_of_proppelants.append(knxy)
+list_of_propellants.append(knxy)
 
 kner = Propellant(
     prop_name="KNER",
@@ -132,7 +134,7 @@ kner = Propellant(
     k=1.140,  # ratio of specific heats
     To=1608  # combustion temperature in K
 )
-list_of_proppelants.append(kner)
+list_of_propellants.append(kner)
 
 knfr = Propellant(
     prop_name="KNFR",
@@ -152,7 +154,7 @@ knfr = Propellant(
     k=1.131,  # ratio of specific heats
     To=1710  # combustion temperature in K
 )
-list_of_proppelants.append(knfr)
+list_of_propellants.append(knfr)
 
 knmn_coarse = Propellant(
     prop_name="KNMN coarse",
@@ -172,7 +174,7 @@ knmn_coarse = Propellant(
     k=1.136,  # ratio of specific heats
     To=1616  # combustion temperature in K
 )
-list_of_proppelants.append(knmn_coarse)
+list_of_propellants.append(knmn_coarse)
 
 blackpowder = Propellant(    
     prop_name="Blackpowder",
@@ -192,7 +194,7 @@ blackpowder = Propellant(
     k=1.130,  # ratio of specific heats
     To=1770  # combustion temperature in K
 )
-list_of_proppelants.append(blackpowder)
+list_of_propellants.append(blackpowder)
 
 knpa = Propellant(    
     prop_name="KNPA",
@@ -212,6 +214,13 @@ knpa = Propellant(
     k=1.130,  # ratio of specific heats
     To=1770  # combustion temperature in K
 )
-list_of_proppelants.append(knpa)
+list_of_propellants.append(knpa)
 
+
+### Structural materials
+steel = StructuralMaterial('steel', rho_steel)
+aluminum = StructuralMaterial('aluminum', rho_aluminum)
+PVC = StructuralMaterial('PVC', rho_PVC)
+
+list_of_materials = [steel, aluminum, PVC]
 
